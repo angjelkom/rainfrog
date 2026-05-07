@@ -11,6 +11,7 @@ use crate::{action::Action, cli::Driver, focus::Focus, keyring::Password};
 
 // percent encoding for passwords in connection strings
 const FRAGMENT: &AsciiSet = &CONTROLS
+  .add(b'%')
   .add(b' ')
   .add(b'"')
   .add(b'<')
@@ -90,6 +91,8 @@ pub struct DatabaseConnection {
   pub default: bool,
   #[serde(default)]
   pub enable_cleartext_plugin: Option<bool>,
+  #[serde(default)]
+  pub password_cmd: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -108,20 +111,21 @@ pub struct Config {
 
 impl StructuredConnection {
   pub fn connection_string(&self, driver: Driver, password: Password) -> Result<String> {
+    let encoded_username = utf8_percent_encode(&self.username, FRAGMENT);
     let encoded_password = utf8_percent_encode(password.as_ref(), FRAGMENT);
     match driver {
       Driver::Postgres => Ok(format!(
         "postgresql://{}:{}@{}:{}/{}",
-        self.username, encoded_password, self.host, self.port, self.database
+        encoded_username, encoded_password, self.host, self.port, self.database
       )),
       Driver::MySql => Ok(format!(
         "mysql://{}:{}@{}:{}/{}",
-        self.username, encoded_password, self.host, self.port, self.database
+        encoded_username, encoded_password, self.host, self.port, self.database
       )),
       Driver::Sqlite => Err(eyre::Report::msg("Sqlite only supports raw connection strings")),
       Driver::Oracle => Ok(format!(
         "jdbc:oracle:thin:{}/{}@//{}:{}/{}",
-        self.username, encoded_password, self.host, self.port, self.database
+        encoded_username, encoded_password, self.host, self.port, self.database
       )),
       #[cfg(feature = "duckdb")]
       Driver::DuckDb => Err(eyre::Report::msg("DuckDb only supports raw connection strings")),

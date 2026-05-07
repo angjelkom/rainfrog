@@ -7,6 +7,12 @@ use crate::Result;
 
 pub struct Password(String);
 
+impl From<String> for Password {
+  fn from(s: String) -> Self {
+    Self(s)
+  }
+}
+
 impl AsRef<str> for Password {
   fn as_ref(&self) -> &str {
     self.0.as_ref()

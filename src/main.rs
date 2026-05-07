@@ -85,7 +85,25 @@ fn resolve_driver(args: &mut Cli, config: &Config) -> Result<Driver> {
         let url = match conn.connection {
           ConnectionString::Raw { connection_string } => Ok(connection_string),
           ConnectionString::Structured { details } => {
-            let password = get_password(&name, &details.username)?;
+            let password = if let Some(cmd) = &conn.password_cmd {
+              let output = Command::new("sh")
+                .arg("-c")
+                .arg(cmd)
+                .output()
+                .map_err(|e| color_eyre::eyre::eyre!("failed to run password_cmd: {e}"))?;
+              if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                return Err(color_eyre::eyre::eyre!("password_cmd failed: {stderr}"));
+              }
+              keyring::Password::from(
+                String::from_utf8(output.stdout)
+                  .map_err(|e| color_eyre::eyre::eyre!("password_cmd output is not valid utf-8: {e}"))?
+                  .trim()
+                  .to_string(),
+              )
+            } else {
+              get_password(&name, &details.username)?
+            };
             details.connection_string(conn.driver, password)
           },
         }?;

@@ -8,6 +8,8 @@ data_row_spacer = false
 # dev-postgres = { host = "localhost", driver = "postgres", port = 5499, database = "rainfrog", username = "root" }
 # enable_cleartext_plugin is opt-in and only applies to mysql connections
 # dev-mysql = { host = "localhost", driver = "mysql", port = 3306, database = "mydb", username = "user", enable_cleartext_plugin = true }
+# password_cmd runs a shell command to get the password instead of using the keyring
+# rds-mysql = { host = "mydb.cluster-xyz.region.rds.amazonaws.com", driver = "mysql", port = 3306, database = "mydb", username = "user", enable_cleartext_plugin = true, password_cmd = "aws rds generate-db-auth-token --hostname mydb.cluster-xyz.region.rds.amazonaws.com --port 3306 --region us-east-1 --username user" }
 
 [keybindings.Menu]
 "<Ctrl-c>" = "Quit"
