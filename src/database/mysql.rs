@@ -392,6 +392,10 @@ impl MySqlDriver<'_> {
           }
         }
 
+        if args.enable_cleartext_plugin {
+          opts = opts.enable_cleartext_plugin(true);
+        }
+
         Ok(opts)
       },
     }
